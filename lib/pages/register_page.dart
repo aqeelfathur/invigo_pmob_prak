@@ -39,6 +39,17 @@ class _RegisterPageState extends State<RegisterPage> {
       });
       return;
     }
+    // bool isValidPassword(String password) {
+    //   final regex = RegExp(r'^(?=.*[A-Z]).{8,}$');
+    //   return regex.hasMatch(password);
+    // }
+
+    // if (!isValidPassword(_passwordController.text)) {
+    //   setState(() {
+    //     _errorMessage = 'Password harus minimal 8 karakter dan ada huruf besar.';
+    //   });
+    //   return;
+    // }
     
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {

@@ -28,7 +28,7 @@ class AuthService {
         'id_user': response.user!.id,
         'nama_lengkap': namaLengkap,
         'email': email,
-        'password': password, // Sebaiknya jangan simpan password di tabel - gunakan autentikasi Supabase saja
+        'password': password,
         'phone_number': phoneNumber,
       });
     } else {

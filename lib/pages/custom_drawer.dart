@@ -106,87 +106,54 @@ class _CustomDrawerState extends State<CustomDrawer> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Header with user info
           _buildDrawerHeader(),
-          
-          // Common navigation options (always show)
+
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
+            leading: Icon(Icons.person),
+            title: Text('Profile'),
             onTap: () {
-              Navigator.pop(context); // Close drawer
-              widget.onTap(0); // Home adalah index 0
+              Navigator.pop(context);
+              widget.onTap(3);
             },
           ),
-          
-          // Items that only show when logged in
-          if (_isAuthenticated) ...[
-            ListTile(
-              leading: Icon(Icons.warehouse),
-              title: Text('Warehouse'),
-              onTap: () {
-                Navigator.pop(context); // Close drawer
-                widget.onTap(1); // Warehouse adalah index 1
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.bar_chart),
-              title: Text('Reports'),
-              onTap: () {
-                Navigator.pop(context); // Close drawer
-                widget.onTap(2); // Reports adalah index 2
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Profile'),
-              onTap: () {
-                Navigator.pop(context); // Close drawer
-                widget.onTap(3); // Profile adalah index 3
-              },
-            ),
-          ],
-          
-          // Common settings items
+
           const Divider(),
+
           ListTile(
             leading: Icon(Icons.settings),
             title: Text('Settings'),
             onTap: () {
-              Navigator.pop(context); // Close drawer
-              // Untuk halaman yang tidak ada di bottom nav, tetap gunakan push
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => UserSettingsScreen()),
               ).then((_) {
-                // Refresh data jika diperlukan setelah kembali dari settings
                 _loadUserData();
               });
             },
           ),
+
           ListTile(
             leading: Icon(Icons.contact_support),
             title: Text('Contact Person'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to contact page (jika ada)
               // Navigator.push(context, MaterialPageRoute(builder: (context) => ContactScreen()));
             },
           ),
-          
-          // Login/Logout button based on auth state
+
           const Divider(),
+
           !_isAuthenticated
               ? ListTile(
                   leading: Icon(Icons.login),
                   title: Text('Login'),
                   onTap: () {
-                    Navigator.pop(context); // Close drawer
+                    Navigator.pop(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => LoginPage()),
                     ).then((_) {
-                      // Reload user data when returning from login page
                       _loadUserData();
                     });
                   },
@@ -195,14 +162,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   leading: Icon(Icons.logout, color: Colors.red),
                   title: Text('Logout', style: TextStyle(color: Colors.red)),
                   onTap: () {
-                    Navigator.pop(context); // Close drawer first
-                    _logout(context); // Then logout
+                    Navigator.pop(context);
+                    _logout(context);
                   },
                 ),
         ],
       ),
     );
   }
+
 
   Widget _buildDrawerHeader() {
     return DrawerHeader(

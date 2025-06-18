@@ -3,26 +3,45 @@ import 'package:flutter/services.dart';
 import '../services/product_service.dart';
 import '../models/product_model.dart';
 
-class AddProductScreen extends StatefulWidget {
+class EditProductScreen extends StatefulWidget {
+  final Product product;
+
+  const EditProductScreen({Key? key, required this.product}) : super(key: key);
+
   @override
-  _AddProductScreenState createState() => _AddProductScreenState();
+  _EditProductScreenState createState() => _EditProductScreenState();
 }
 
-class _AddProductScreenState extends State<AddProductScreen> {
+class _EditProductScreenState extends State<EditProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProductService _productService = ProductService();
   
   // Form controllers
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _supplierPriceController = TextEditingController();
-  final _sellPriceController = TextEditingController();
-  final _minStockController = TextEditingController();
-  final _imageUrlController = TextEditingController();
-  final _supplierDetailsController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _quantityController;
+  late TextEditingController _supplierPriceController;
+  late TextEditingController _sellPriceController;
+  late TextEditingController _minStockController;
+  late TextEditingController _imageUrlController;
 
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    _nameController = TextEditingController(text: widget.product.namaProduk);
+    _descriptionController = TextEditingController(text: widget.product.deskripsi ?? '');
+    _quantityController = TextEditingController(text: widget.product.jumlahProduk.toString());
+    _supplierPriceController = TextEditingController(text: widget.product.hargaSupplier.toString());
+    _sellPriceController = TextEditingController(text: widget.product.hargaJual.toString());
+    _minStockController = TextEditingController(text: widget.product.stokMinimal.toString());
+    _imageUrlController = TextEditingController(text: widget.product.gambarProduk ?? '');
+  }
 
   @override
   void dispose() {
@@ -33,11 +52,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _sellPriceController.dispose();
     _minStockController.dispose();
     _imageUrlController.dispose();
-    _supplierDetailsController.dispose();
     super.dispose();
   }
 
-  Future<void> _saveProduct() async {
+  Future<void> _updateProduct() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -47,7 +65,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
-      final product = Product(
+      final updatedProduct = widget.product.copyWith(
         namaProduk: _nameController.text.trim(),
         deskripsi: _descriptionController.text.trim().isEmpty 
             ? null 
@@ -63,11 +81,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
             : _imageUrlController.text.trim(),
       );
 
-      await _productService.addProduct(product);
+      await _productService.updateProduct(updatedProduct);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Product added successfully'),
+          content: Text('Product updated successfully'),
           backgroundColor: Colors.green,
         ),
       );
@@ -76,7 +94,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error adding product: $e'),
+          content: Text('Error updating product: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -87,12 +105,70 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  Future<void> _deleteProduct() async {
+    // Show confirmation dialog
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete "${widget.product.namaProduk}"? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _productService.deleteProduct(widget.product.id!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Product'),
+        title: Text('Edit Product'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.red),
+            onPressed: _isLoading ? null : _deleteProduct,
+            tooltip: 'Delete Product',
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -101,6 +177,36 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Product Image Preview
+              if (_imageUrlController.text.isNotEmpty)
+                Container(
+                  height: 200,
+                  margin: EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      _imageUrlController.text,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                              Text('Invalid image URL', style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
               // Image URL Input
               _buildTextFormField(
                 controller: _imageUrlController,
@@ -219,16 +325,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
-
-              // Supplier Details (Optional)
-              _buildTextFormField(
-                controller: _supplierDetailsController,
-                label: 'Supplier Details',
-                hint: 'Enter supplier information',
-                prefixIcon: Icons.business,
-                maxLines: 2,
-              ),
               SizedBox(height: 32),
 
               // Action Buttons
@@ -248,7 +344,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _saveProduct,
+                    onPressed: _isLoading ? null : _updateProduct,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -267,7 +363,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             ),
                           )
                         : Text(
-                            'Save Product',
+                            'Update Product',
                             style: TextStyle(fontSize: 16),
                           ),
                   ),
@@ -317,4 +413,5 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
       ),
     );
-  }}
+  }
+}

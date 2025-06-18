@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:invigo/pages/custom_drawer.dart';
 import 'package:invigo/pages/main_screen.dart';
 import 'package:invigo/pages/inventory_detail_screen.dart';
+import '../services/product_service.dart';
+import '../models/product_model.dart';
 
 class InventoryScreen extends StatelessWidget {
   @override
@@ -53,12 +55,39 @@ class ItemsWidget extends StatefulWidget {
 }
 
 class _ItemsWidgetState extends State<ItemsWidget> {
+  final ProductService _productService = ProductService();
+  int _totalItems = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTotalItems();
+  }
+
+  Future<void> _loadTotalItems() async {
+    try {
+      final count = await _productService.getTotalProductsCount();
+      setState(() {
+        _totalItems = count;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading items count: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildListTile(
       Icons.inventory,
       'Items',
-      '150 items',
+      _isLoading ? 'Loading...' : '$_totalItems items',
       onTap: () {
         Navigator.push(
           context,
@@ -69,19 +98,41 @@ class _ItemsWidgetState extends State<ItemsWidget> {
   }
 }
 
-class LowStockAlert extends StatelessWidget {
-  final List<Map<String, dynamic>> inventory = [
-    {"name": "Coca Cola", "stock": 36},
-    {"name": "Doritos", "stock": 30},
-    {"name": "Lays", "stock": 5},
-    {"name": "Apples", "stock": 2},
-  ];
+class LowStockAlert extends StatefulWidget {
+  @override
+  _LowStockAlertState createState() => _LowStockAlertState();
+}
+
+class _LowStockAlertState extends State<LowStockAlert> {
+  final ProductService _productService = ProductService();
+  List<Product> _lowStockProducts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLowStockProducts();
+  }
+
+  Future<void> _loadLowStockProducts() async {
+    try {
+      final products = await _productService.getLowStockProducts();
+      setState(() {
+        _lowStockProducts = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading low stock products: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> lowStockItems =
-        inventory.where((item) => item["stock"] < 10).toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -90,38 +141,58 @@ class LowStockAlert extends StatelessWidget {
                 fontSize: 25,
                 fontWeight: FontWeight.w500,
                 color: Colors.black)),
-        if (lowStockItems.isEmpty)
+        SizedBox(height: 8),
+        if (_isLoading)
+          CircularProgressIndicator()
+        else if (_lowStockProducts.isEmpty)
           Text("All items are in sufficient stock.",
               style: TextStyle(color: Colors.grey))
         else
           Column(
-            children: lowStockItems.map((item) {
+            children: _lowStockProducts.map((product) {
               return _buildListTile(
                 Icons.warning,
-                item["name"],
-                "Stock: ${item["stock"]} (Low!)",
+                product.namaProduk,
+                "Stock: ${product.jumlahProduk} (Low!)",
+                isLowStock: true,
+                onTap: () {
+                  // Navigate ke inventory detail dan scroll ke produk ini
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InventoryDetailScreen(
+                        highlightProductId: product.id,
+                      ),
+                    ),
+                  );
+                },
               );
             }).toList(),
           ),
       ],
     );
   }
+
 }
 
 Widget _buildListTile(IconData icon, String title, String subtitle,
-    {VoidCallback? onTap}) {
+    {VoidCallback? onTap, bool isLowStock = false}) {
   return Card(
     elevation: 4,
     child: ListTile(
-      leading: Icon(icon, color: Colors.blue),
+      leading: Icon(
+        icon, 
+        color: isLowStock ? Colors.red : Colors.blue
+      ),
       title: Text(title),
-      subtitle: Text(subtitle),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: isLowStock ? Colors.red : null,
+        ),
+      ),
       trailing: Icon(Icons.arrow_forward),
-      onTap: () {
-        if (onTap != null) {
-          onTap();
-        }
-      },
+      onTap: onTap,
     ),
   );
 }
