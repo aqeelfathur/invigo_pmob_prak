@@ -706,7 +706,7 @@ class _HomeScreenState extends State<HomeScreen> {
               () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => InventoryDetailScreen()),
+                    MaterialPageRoute(builder: (context) => AddProductScreen()),
                   );
                 
               },
@@ -719,7 +719,7 @@ class _HomeScreenState extends State<HomeScreen> {
               () {
                 Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => AddProductScreen()),
+                    MaterialPageRoute(builder: (context) => InventoryDetailScreen()),
                   );
               },
             ),

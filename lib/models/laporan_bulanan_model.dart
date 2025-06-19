@@ -8,8 +8,8 @@ class LaporanBulanan {
   final int bulan;
   final int tahun;
   final int totalPengadaan;
+  final int? totalPendapatan; // ← Tambahkan ini
   
-  // Tambahan field untuk join data (opsional)
   final String? namaProduk;
 
   LaporanBulanan({
@@ -19,6 +19,7 @@ class LaporanBulanan {
     required this.bulan,
     required this.tahun,
     required this.totalPengadaan,
+    this.totalPendapatan, // ← Tambahkan ini
     this.namaProduk,
   });
 
@@ -30,6 +31,7 @@ class LaporanBulanan {
       bulan: json['bulan'],
       tahun: json['tahun'],
       totalPengadaan: json['total_pengadaan'],
+      totalPendapatan: json['total_pendapatan'], // ← Tambahkan ini
       namaProduk: json['nama_produk'],
     );
   }
@@ -41,6 +43,7 @@ class LaporanBulanan {
       'bulan': bulan,
       'tahun': tahun,
       'total_pengadaan': totalPengadaan,
+      'total_pendapatan': totalPendapatan, // ← Tambahkan ini
     };
     
     if (id != null) {
@@ -57,6 +60,7 @@ class LaporanBulanan {
     int? bulan,
     int? tahun,
     int? totalPengadaan,
+    int? totalPendapatan, // ← Tambahkan ini
     String? namaProduk,
   }) {
     return LaporanBulanan(
@@ -66,6 +70,7 @@ class LaporanBulanan {
       bulan: bulan ?? this.bulan,
       tahun: tahun ?? this.tahun,
       totalPengadaan: totalPengadaan ?? this.totalPengadaan,
+      totalPendapatan: totalPendapatan ?? this.totalPendapatan, // ← Tambahkan ini
       namaProduk: namaProduk ?? this.namaProduk,
     );
   }

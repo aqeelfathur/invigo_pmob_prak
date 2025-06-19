@@ -3,7 +3,6 @@ import 'package:invigo/pages/custom_drawer.dart';
 import 'package:invigo/pages/main_screen.dart';
 import 'package:invigo/pages/monthly_report_screen.dart';
 import 'package:invigo/pages/weekly_report_screen.dart';
-import 'package:invigo/widgets/build_list_tile.dart';
 
 class ReportsScreen extends StatefulWidget {
   @override
@@ -11,44 +10,45 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  int monthlyReports = 1;
-  int weeklyReports = 4;
-
-  void updateReports() {
-    setState(() {
-      monthlyReports += 1;
-      weeklyReports += 4;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Reports'),
+        leading: IconButton(
+          icon: Icon(Icons.menu),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.notifications, size: 28),
-            onPressed: () {},
+            onPressed: () {
+              // Tambahkan aksi untuk notifikasi jika diperlukan
+            },
           ),
-          Builder(
-            builder: (context) {
-              return IconButton(
-                icon: Icon(Icons.person, size: 28),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              );
+          IconButton(
+            icon: Icon(Icons.person, size: 28),
+            onPressed: () {
+              // Aksi untuk profil atau menu lainnya
             },
           ),
         ],
       ),
       drawer: CustomDrawer(
         onTap: (index) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => MainScreen()),
-          );
+          // Tutup drawer terlebih dahulu
+          Navigator.pop(context);
+          
+          // Kemudian navigasi ke halaman yang sesuai
+          if (index == 0) { // Asumsi index 0 adalah MainScreen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MainScreen()),
+            );
+          }
+          // Tambahkan kondisi lain sesuai dengan index yang ada di CustomDrawer
         },
       ),
       body: Padding(
@@ -56,8 +56,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
+            // Monthly Report - Debug Version
+            GestureDetector(
               onTap: () {
+              
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -65,15 +67,57 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   ),
                 );
               },
-              child: buildListTile(
-                Icons.bar_chart,
-                'Report in Month',
-                '$monthlyReports Reports',
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.bar_chart, size: 40, color: Colors.blue),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Monthly Report',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Tap to view monthly reports',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
             SizedBox(height: 16),
-            InkWell(
+            
+            // Weekly Report - Debug Version
+            GestureDetector(
               onTap: () {
+                
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -81,16 +125,50 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   ),
                 );
               },
-              child: buildListTile(
-                Icons.bar_chart,
-                'Reports in Week',
-                '$weeklyReports Reports',
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.show_chart, size: 40, color: Colors.green),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Weekly Report',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Tap to view weekly reports',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: updateReports,
-              child: Text('Update Reports'),
             ),
           ],
         ),
