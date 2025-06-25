@@ -1,39 +1,49 @@
 name: invigo
 description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-
+publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
   sdk: ^3.6.2
 
-
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
-  image_picker: ^1.1.2
+  image_picker: ^1.1.2  # Balik ke versi terbaru juga
   fl_chart: ^0.71.0
-  supabase_flutter: ^1.10.25
+  supabase_flutter: ^2.8.0  # NAIK ke versi terbaru
   flutter_secure_storage: ^9.0.0
+  path_provider: ^2.1.5  # Update juga
+  shared_preferences: ^2.3.2  # Update
+  url_launcher: ^6.3.1  # Update
+  webview_flutter: ^4.10.0  # Update
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
- 
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
+# # Override untuk force versi lama
+# dependency_overrides:
+#   image_picker_android: ^0.8.8
+#   flutter_plugin_android_lifecycle: ^2.0.15
+#   path_provider_android: ^2.0.27
+#   shared_preferences_android: ^2.1.4
 
 flutter:
-
-  
   uses-material-design: true
   assets:
     - lib/images/logo 3.png
     - lib/images/logo2.png
 
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "lib/images/logo 3.png"  # Pakai gambar yang udah ada
+  min_sdk_android: 21
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "lib/images/logo 3.png"  # Sama dengan image_path

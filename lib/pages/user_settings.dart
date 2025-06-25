@@ -109,13 +109,25 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   Future<void> _uploadProfileImage() async {
   if (_imageFile == null || _userProfile == null) return;
   
+  // Tambahkan null check untuk id
+  final userId = _userProfile!.id;
+  if (userId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: User ID tidak ditemukan'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+  
   setState(() {
     _isUploadingImage = true;
   });
   
   try {
     // Buat nama file yang unik
-    final String fileName = '${_userProfile!.id}_${DateTime.now().millisecondsSinceEpoch}${path.extension(_imageFile!.path)}';
+    final String fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}${path.extension(_imageFile!.path)}';
     final filePath = 'profile_pictures/$fileName';
     
     // Tampilkan informasi debug
@@ -138,11 +150,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         .from('userimages')
         .getPublicUrl(filePath);
     
-    // Update user profile di database
+    // Update user profile di database - Fixed null safety
     await supabase
         .from('users')
         .update({'profil_picture': imageUrl})
-        .eq('id_user', _userProfile!.id);
+        .eq('id_user', userId); // Menggunakan userId yang sudah dicek tidak null
     
     // Update state
     setState(() {
@@ -185,85 +197,99 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
   // Method untuk update profile
   Future<void> _updateProfile() async {
-    if (_profileFormKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
+  if (_profileFormKey.currentState!.validate()) {
+    setState(() {
+      _isSaving = true;
+    });
+    
+    try {
+      if (_userProfile == null) return;
       
-      try {
-        if (_userProfile == null) return;
-        
-        // Update data user di database
-        await supabase
-            .from('users')
-            .update({
-              'nama_lengkap': _nameController.text,
-              'phone_number': _phoneController.text.isEmpty ? null : _phoneController.text,
-            })
-            .eq('id_user', _userProfile!.id);
-        
-        // Update email jika berubah (perlu konfirmasi dengan Supabase Auth)
-        if (_emailController.text != _userProfile!.email) {
-          try {
-            // Update email di auth
-            await supabase.auth.updateUser(
-              UserAttributes(
-                email: _emailController.text,
-              ),
-            );
-            
-            // Update juga di tabel users
-            await supabase
-                .from('users')
-                .update({
-                  'email': _emailController.text,
-                })
-                .eq('id_user', _userProfile!.id);
-                
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Email berhasil diperbarui. Silakan verifikasi email baru Anda.'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } catch (e) {
-            print('Error updating email: $e');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error saat memperbarui email: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            // Kembalikan nilai email ke yang lama
-            _emailController.text = _userProfile!.email;
-          }
-        }
-        
-        // Reload user profile
-        await _loadUserProfile();
-        
+      // Tambahkan null check untuk id
+      final userId = _userProfile!.id;
+      if (userId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Profil berhasil diperbarui'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } catch (e) {
-        print('Error updating profile: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: User ID tidak ditemukan'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
         setState(() {
           _isSaving = false;
         });
+        return;
       }
+      
+      // Update data user di database - Fixed null safety
+      await supabase
+          .from('users')
+          .update({
+            'nama_lengkap': _nameController.text,
+            'phone_number': _phoneController.text.isEmpty ? null : _phoneController.text,
+          })
+          .eq('id_user', userId); // Menggunakan userId yang sudah dicek tidak null
+      
+      // Update email jika berubah (perlu konfirmasi dengan Supabase Auth)
+      if (_emailController.text != _userProfile!.email) {
+        try {
+          // Update email di auth
+          await supabase.auth.updateUser(
+            UserAttributes(
+              email: _emailController.text,
+            ),
+          );
+          
+          // Update juga di tabel users - Fixed null safety
+          await supabase
+              .from('users')
+              .update({
+                'email': _emailController.text,
+              })
+              .eq('id_user', userId); // Menggunakan userId yang sudah dicek tidak null
+              
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Email berhasil diperbarui. Silakan verifikasi email baru Anda.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } catch (e) {
+          print('Error updating email: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saat memperbarui email: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // Kembalikan nilai email ke yang lama
+          _emailController.text = _userProfile!.email;
+        }
+      }
+      
+      // Reload user profile
+      await _loadUserProfile();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profil berhasil diperbarui'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error updating profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
-
+}
   // Method untuk update password
   Future<void> _updatePassword() async {
     if (_passwordFormKey.currentState!.validate()) {

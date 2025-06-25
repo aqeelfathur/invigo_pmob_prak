@@ -161,85 +161,85 @@ class PendapatanService {
 
   // Get pendapatan statistics
   Future<Map<String, dynamic>> getPendapatanStats() async {
-    try {
-      final userId = await _getCurrentUserId();
-      if (userId == null) throw Exception('User tidak terautentikasi');
+  try {
+    final userId = await _getCurrentUserId();
+    if (userId == null) throw Exception('User tidak terautentikasi');
 
-      // Get total pendapatan count
-      final countResponse = await _client
-          .from('pendapatan')
-          .select('id_pendapatan', const FetchOptions(count: CountOption.exact))
-          .eq('id_user', userId);
+    // Get total pendapatan count - Fixed for Supabase 2.8
+    final totalTransactions = await _client
+        .from('pendapatan')
+        .count()
+        .eq('id_user', userId);
 
-      // Get today's pendapatan
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-      final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59);
+    // Get today's pendapatan
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59);
 
-      final todayResponse = await _client
-          .from('pendapatan')
-          .select('''
-            jumlah_produk_pendapatan,
-            products!inner(harga_jual)
-          ''')
-          .eq('id_user', userId)
-          .gte('tanggal_pendapatan', startOfDay.toIso8601String())
-          .lte('tanggal_pendapatan', endOfDay.toIso8601String());
+    final todayResponse = await _client
+        .from('pendapatan')
+        .select('''
+          jumlah_produk_pendapatan,
+          products!inner(harga_jual)
+        ''')
+        .eq('id_user', userId)
+        .gte('tanggal_pendapatan', startOfDay.toIso8601String())
+        .lte('tanggal_pendapatan', endOfDay.toIso8601String());
 
-      int todayRevenue = 0;
-      int todayQuantity = 0;
-      for (var item in todayResponse) {
-        final quantity = item['jumlah_produk_pendapatan'] as int;
-        final hargaJual = item['products']['harga_jual'] as int;
-        todayRevenue += (quantity * hargaJual);
-        todayQuantity += quantity;
-      }
-
-      // Get this month's pendapatan
-      final firstDayThisMonth = DateTime(today.year, today.month, 1);
-      final lastDayThisMonth = DateTime(today.year, today.month + 1, 0);
-
-      final thisMonthResponse = await _client
-          .from('pendapatan')
-          .select('''
-            jumlah_produk_pendapatan,
-            products!inner(harga_jual)
-          ''')
-          .eq('id_user', userId)
-          .gte('tanggal_pendapatan', firstDayThisMonth.toIso8601String())
-          .lte('tanggal_pendapatan', lastDayThisMonth.toIso8601String());
-
-      int thisMonthRevenue = 0;
-      int thisMonthQuantity = 0;
-      for (var item in thisMonthResponse) {
-        final quantity = item['jumlah_produk_pendapatan'] as int;
-        final hargaJual = item['products']['harga_jual'] as int;
-        thisMonthRevenue += (quantity * hargaJual);
-        thisMonthQuantity += quantity;
-      }
-
-      return {
-        'total_transactions': countResponse.count ?? 0,
-        'today_revenue': todayRevenue,
-        'today_quantity': todayQuantity,
-        'today_transactions': todayResponse.length,
-        'this_month_revenue': thisMonthRevenue,
-        'this_month_quantity': thisMonthQuantity,
-        'this_month_transactions': thisMonthResponse.length,
-      };
-    } catch (e) {
-      print('Error getting pendapatan stats: $e');
-      return {
-        'total_transactions': 0,
-        'today_revenue': 0,
-        'today_quantity': 0,
-        'today_transactions': 0,
-        'this_month_revenue': 0,
-        'this_month_quantity': 0,
-        'this_month_transactions': 0,
-      };
+    int todayRevenue = 0;
+    int todayQuantity = 0;
+    for (var item in todayResponse) {
+      final quantity = item['jumlah_produk_pendapatan'] as int;
+      final hargaJual = item['products']['harga_jual'] as int;
+      todayRevenue += (quantity * hargaJual);
+      todayQuantity += quantity;
     }
+
+    // Get this month's pendapatan
+    final firstDayThisMonth = DateTime(today.year, today.month, 1);
+    final lastDayThisMonth = DateTime(today.year, today.month + 1, 0);
+
+    final thisMonthResponse = await _client
+        .from('pendapatan')
+        .select('''
+          jumlah_produk_pendapatan,
+          products!inner(harga_jual)
+        ''')
+        .eq('id_user', userId)
+        .gte('tanggal_pendapatan', firstDayThisMonth.toIso8601String())
+        .lte('tanggal_pendapatan', lastDayThisMonth.toIso8601String());
+
+    int thisMonthRevenue = 0;
+    int thisMonthQuantity = 0;
+    for (var item in thisMonthResponse) {
+      final quantity = item['jumlah_produk_pendapatan'] as int;
+      final hargaJual = item['products']['harga_jual'] as int;
+      thisMonthRevenue += (quantity * hargaJual);
+      thisMonthQuantity += quantity;
+    }
+
+    return {
+      'total_transactions': totalTransactions, // Fixed: now using int directly
+      'today_revenue': todayRevenue,
+      'today_quantity': todayQuantity,
+      'today_transactions': todayResponse.length,
+      'this_month_revenue': thisMonthRevenue,
+      'this_month_quantity': thisMonthQuantity,
+      'this_month_transactions': thisMonthResponse.length,
+    };
+  } catch (e) {
+    print('Error getting pendapatan stats: $e');
+    return {
+      'total_transactions': 0,
+      'today_revenue': 0,
+      'today_quantity': 0,
+      'today_transactions': 0,
+      'this_month_revenue': 0,
+      'this_month_quantity': 0,
+      'this_month_transactions': 0,
+    };
   }
+}
 
   // Delete pendapatan (optional - untuk keperluan management)
   Future<void> deletePendapatan(String pendapatanId) async {

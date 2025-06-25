@@ -117,12 +117,13 @@ class ProductService {
       final userId = await _getCurrentUserId();
       if (userId == null) return 0;
 
-      final response = await _client
+      // Method 1: count() returns int directly in Supabase 2.8
+      final count = await _client
           .from('products')
-          .select('produk_id', const FetchOptions(count: CountOption.exact))
+          .count()
           .eq('id_user', userId);
       
-      return response.count ?? 0;
+      return count; // count is already an int
     } catch (e) {
       print('Error getting products count: $e');
       return 0;

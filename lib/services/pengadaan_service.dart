@@ -143,47 +143,47 @@ class PengadaanService {
 
   // Get pengadaan statistics
   Future<Map<String, dynamic>> getPengadaanStats() async {
-    try {
-      final userId = await _getCurrentUserId();
-      if (userId == null) throw Exception('User tidak terautentikasi');
+  try {
+    final userId = await _getCurrentUserId();
+    if (userId == null) throw Exception('User tidak terautentikasi');
 
-      // Get total pengadaan count
-      final countResponse = await _client
-          .from('pengadaan')
-          .select('id_pengadaan', const FetchOptions(count: CountOption.exact))
-          .eq('id_user', userId);
+    // Get total pengadaan count - Fixed for Supabase 2.8
+    final totalCount = await _client
+        .from('pengadaan')
+        .count()
+        .eq('id_user', userId);
 
-      // Get this month's pengadaan
-      final now = DateTime.now();
-      final firstDayThisMonth = DateTime(now.year, now.month, 1);
-      final lastDayThisMonth = DateTime(now.year, now.month + 1, 0);
+    // Get this month's pengadaan
+    final now = DateTime.now();
+    final firstDayThisMonth = DateTime(now.year, now.month, 1);
+    final lastDayThisMonth = DateTime(now.year, now.month + 1, 0);
 
-      final thisMonthResponse = await _client
-          .from('pengadaan')
-          .select('jumlah_produk_pengadaan')
-          .eq('id_user', userId)
-          .gte('tanggal_pengadaan', firstDayThisMonth.toIso8601String())
-          .lte('tanggal_pengadaan', lastDayThisMonth.toIso8601String());
+    final thisMonthResponse = await _client
+        .from('pengadaan')
+        .select('jumlah_produk_pengadaan')
+        .eq('id_user', userId)
+        .gte('tanggal_pengadaan', firstDayThisMonth.toIso8601String())
+        .lte('tanggal_pengadaan', lastDayThisMonth.toIso8601String());
 
-      int thisMonthTotal = 0;
-      for (var item in thisMonthResponse) {
-        thisMonthTotal += (item['jumlah_produk_pengadaan'] as int);
-      }
-
-      return {
-        'total_pengadaan': countResponse.count ?? 0,
-        'this_month_total': thisMonthTotal,
-        'this_month_count': thisMonthResponse.length,
-      };
-    } catch (e) {
-      print('Error getting pengadaan stats: $e');
-      return {
-        'total_pengadaan': 0,
-        'this_month_total': 0,
-        'this_month_count': 0,
-      };
+    int thisMonthTotal = 0;
+    for (var item in thisMonthResponse) {
+      thisMonthTotal += (item['jumlah_produk_pengadaan'] as int);
     }
+
+    return {
+      'total_pengadaan': totalCount, // totalCount is already int
+      'this_month_total': thisMonthTotal,
+      'this_month_count': thisMonthResponse.length,
+    };
+  } catch (e) {
+    print('Error getting pengadaan stats: $e');
+    return {
+      'total_pengadaan': 0,
+      'this_month_total': 0,
+      'this_month_count': 0,
+    };
   }
+}
 
   // Delete pengadaan (optional - untuk keperluan management)
   Future<void> deletePengadaan(String pengadaanId) async {
